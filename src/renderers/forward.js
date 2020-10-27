@@ -28,6 +28,7 @@ export default class ForwardRenderer {
     // Update the camera matrices
     camera.updateMatrixWorld();
     mat4.invert(this._viewMatrix, camera.matrixWorld.elements);
+    // console.log(JSON.stringify(camera.projectionMatrix));    // Display information of the variable
     mat4.copy(this._projectionMatrix, camera.projectionMatrix.elements);
     mat4.multiply(this._viewProjectionMatrix, this._projectionMatrix, this._viewMatrix);
 

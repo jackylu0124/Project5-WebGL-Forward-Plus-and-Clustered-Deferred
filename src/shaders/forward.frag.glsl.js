@@ -52,6 +52,7 @@ export default function(params) {
     // LOOK: This extracts the 4th float (radius) of the (index)th light in the buffer
     // Note that this is just an example implementation to extract one float.
     // There are more efficient ways if you need adjacent values
+    // Jacky added: why is the textureHeight argument here 2? Does 3 mean the 4th component (since 0-index)?
     light.radius = ExtractFloat(u_lightbuffer, ${params.numLights}, 2, index, 3);
 
     light.color = v2.rgb;
