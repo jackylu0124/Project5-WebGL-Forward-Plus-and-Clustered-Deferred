@@ -1,4 +1,6 @@
 export default function(params) {
+  // console.log(JSON.stringify(params));    // Display information of the variable
+  // debugger;
   return `
   #version 100
   precision highp float;
@@ -45,7 +47,7 @@ export default function(params) {
   Light UnpackLight(int index) {
     Light light;
     float u = float(index + 1) / float(${params.numLights + 1});
-    vec4 v1 = texture2D(u_lightbuffer, vec2(u, 0.0));
+    vec4 v1 = texture2D(u_lightbuffer, vec2(u, 0.0));   // Slow
     vec4 v2 = texture2D(u_lightbuffer, vec2(u, 0.5));
     light.position = v1.xyz;
 

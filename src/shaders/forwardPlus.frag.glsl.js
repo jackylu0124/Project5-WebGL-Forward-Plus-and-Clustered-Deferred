@@ -1,4 +1,7 @@
 export default function(params) {
+  // console.log(JSON.stringify(params));    // Display information of the variable
+  // debugger;
+
   return `
   // TODO: This is pretty much just a clone of forward.frag.glsl.js
 
@@ -16,6 +19,17 @@ export default function(params) {
   varying vec3 v_normal;
   varying vec2 v_uv;
 
+  struct Light {
+    vec3 position;
+    float radius;
+    vec3 color;
+  };
+
+  // Jacky added
+  uniform mat4 u_viewMatrix;
+  uniform mat4 u_viewProjectionMatrix;
+  uniform vec2 u_resolution;
+
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
     vec3 up = normalize(vec3(0.001, 1, 0.001));
@@ -23,12 +37,6 @@ export default function(params) {
     vec3 surfbinor = cross(geomnor, surftan);
     return normap.y * surftan + normap.x * surfbinor + normap.z * geomnor;
   }
-
-  struct Light {
-    vec3 position;
-    float radius;
-    vec3 color;
-  };
 
   float ExtractFloat(sampler2D texture, int textureWidth, int textureHeight, int index, int component) {
     float u = float(index + 1) / float(textureWidth + 1);
@@ -63,6 +71,7 @@ export default function(params) {
     return light;
   }
 
+
   // Cubic approximation of gaussian curve so we falloff to exactly 0 at the light radius
   float cubicGaussian(float h) {
     if (h < 1.0) {
@@ -81,8 +90,28 @@ export default function(params) {
 
     vec3 fragColor = vec3(0.0);
 
-    for (int i = 0; i < ${params.numLights}; ++i) {
-      Light light = UnpackLight(i);
+    vec2 fragUV = gl_FragCoord.xy / vec2(float(${params.widthParam}), float(${params.heightParam}));
+    float xInterval = 1.0 / float(${params.xSlicesParam});
+    float yInterval = 1.0 / float(${params.ySlicesParam});
+    float zInterval = (float(${params.farParam}) - float(${params.nearParam})) / float(${params.zSlicesParam});
+    int xCluster = int(floor(fragUV.x / xInterval));
+    int yCluster = int(floor(fragUV.y / yInterval));
+    float depth = abs((u_viewMatrix * vec4(v_position, 1.0)).z);
+    int zCluster = int(floor((depth - float(${params.nearParam})) / zInterval));
+
+    int indexCluster = xCluster + yCluster * ${params.xSlicesParam} + zCluster * ${params.xSlicesParam} * ${params.ySlicesParam};
+    int totalClusterNum = ${params.xSlicesParam} * ${params.ySlicesParam} * ${params.zSlicesParam};
+    int lightCount = int(ExtractFloat(u_clusterbuffer, totalClusterNum, ${params.maxLightsParam} + 1, indexCluster, 0));
+
+    for (int i = 0; i < ${params.maxLightsParam}; i++) {
+      if (i >= lightCount) {
+        break;
+      }
+      // Note that it's i + 1 in the last input argument into ExtractFloat() here because the 0th component always stores
+      // the number of lights in that cluster
+      int indexLight = int(ExtractFloat(u_clusterbuffer, totalClusterNum, ${params.maxLightsParam} + 1, indexCluster, i + 1));
+
+      Light light = UnpackLight(indexLight);
       float lightDistance = distance(light.position, v_position);
       vec3 L = (light.position - v_position) / lightDistance;
 
@@ -92,9 +121,28 @@ export default function(params) {
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
     }
 
+
+    // for (int i = 0; i < ${params.numLights}; ++i) {
+    //   Light light = UnpackLight(i);
+    //   float lightDistance = distance(light.position, v_position);
+    //   vec3 L = (light.position - v_position) / lightDistance;
+
+    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+    //   float lambertTerm = max(dot(L, normal), 0.0);
+
+    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+    // }
+
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
+    // Test
+    // vec3 posCamSpace = vec3(u_viewMatrix * vec4(v_position, 1.0));
+    // float depth = posCamSpace.z;
+    // fragColor = float(${params.nearParam}) * 5.0 * vec3(1.0);
+    // fragColor = float(lightCount) / float(${params.maxLightsParam}) * vec3(1.0);
+    // fragColor = depth / float(${params.farParam}) * vec3(1.0);
+    
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;

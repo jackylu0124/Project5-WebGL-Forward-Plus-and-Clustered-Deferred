@@ -1,5 +1,6 @@
 import TextureBuffer from './textureBuffer';
 import { Vector3, Vector4, Plane, Sphere, Frustum } from 'three';
+import { NUM_LIGHTS } from '../scene';
 
 export const MAX_LIGHTS_PER_CLUSTER = 100;
 
@@ -25,7 +26,7 @@ export default class BaseRenderer {
     viewMat.clone().transpose().extractBasis(camR, camU, camF);
 
     let nearClip = camera.near;
-    let farClip = 40.0;
+    let farClip = 50.0;
     let divNumX = this._xSlices;
     let divNumY = this._ySlices;
     let divNumZ = this._zSlices;
@@ -36,7 +37,7 @@ export default class BaseRenderer {
     // new Sphere(new Vector3(15.0, -5.0, 0.0), 8.2) intersects with 245 clusters when divNumX = divNumY = divNumZ = 15
     // and when camera is at initial position
     let s1 = new Sphere(new Vector3(15.0, -5.0, 0.0), 8.2);  // For testing purposes
-    let counter = 0;  // For testing purposes
+    let counterTest = 0;  // For testing purposes
 
     for (let z = 0; z < divNumZ; ++z) {
       let depthCur = nearClip + dz * z;
@@ -105,19 +106,30 @@ export default class BaseRenderer {
           planeBottom.negate();
           let frust = new Frustum(planeFront, planeBack, planeLeft, planeRight, planeTop, planeBottom);
 
-          // For testing purposes
-          if (frust.containsPoint(s1.center) || frust.intersectsSphere(s1)) {
-            counter++;
+          // // For testing purposes
+          // if (frust.containsPoint(s1.center) || frust.intersectsSphere(s1)) {  // For testing purposes
+          //   counterTest++;  // For testing purposes
+          // }  // For testing purposes
+
+          let index = x + y * divNumX + z * divNumX * divNumY;
+          let lightCount = 0;
+          for (let i = 0; i < NUM_LIGHTS; i++) {
+            let r = scene.lights[i].radius;
+            let center = new Vector3(scene.lights[i].position[0], scene.lights[i].position[1], scene.lights[i].position[2]);
+            let s = new Sphere(center, r);
+            
+            if (frust.containsPoint(s.center) || frust.intersectsSphere(s)) {
+              lightCount++;
+              this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, Math.floor(lightCount / 4)) + (lightCount % 4)] = i;
+            }
           }
-
-
-          let i = x + y * divNumX + z * divNumX * divNumY;
-          // Reset the light count to 0 for every cluster
-          this._clusterTexture.buffer[this._clusterTexture.bufferIndex(i, 0)] = 0;
+          // console.log(JSON.stringify(lightCount));    // Display information of the variable
+          // Write in the light count of the current cluster
+          this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, 0) + 0] = lightCount;
         }
       }
     }
-    // console.log(JSON.stringify(counter));    // Display information of the variable
+    // console.log(JSON.stringify(counterTest));    // Display information of the variable
     this._clusterTexture.update();
   }
 }
