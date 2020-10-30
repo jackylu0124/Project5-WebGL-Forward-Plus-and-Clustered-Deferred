@@ -28,7 +28,7 @@ export default function(params) {
   // Jacky added
   uniform mat4 u_viewMatrix;
   uniform mat4 u_viewProjectionMatrix;
-  uniform vec2 u_resolution;
+  uniform vec3 u_camPos;
 
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
@@ -116,33 +116,29 @@ export default function(params) {
       vec3 L = (light.position - v_position) / lightDistance;
 
       float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
+
       float lambertTerm = max(dot(L, normal), 0.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+      bool blinnPhong = true;
+      if (blinnPhong) {
+        // Blinn Phong
+        vec3 lightVec = normalize(light.position - v_position);
+        vec3 viewVec = normalize(u_camPos - v_position);
+        vec3 h = normalize(lightVec + viewVec);
+        float exp = 8.0;
+        float specularIntensity = max(pow(dot(h, normal), exp), 0.0);
+        vec3 specularColor = specularIntensity * light.color * vec3(lightIntensity);
+
+        fragColor += specularColor;
+      }
     }
-
-
-    // for (int i = 0; i < ${params.numLights}; ++i) {
-    //   Light light = UnpackLight(i);
-    //   float lightDistance = distance(light.position, v_position);
-    //   vec3 L = (light.position - v_position) / lightDistance;
-
-    //   float lightIntensity = cubicGaussian(2.0 * lightDistance / light.radius);
-    //   float lambertTerm = max(dot(L, normal), 0.0);
-
-    //   fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
-    // }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
-
-    // Test
-    // vec3 posCamSpace = vec3(u_viewMatrix * vec4(v_position, 1.0));
-    // float depth = posCamSpace.z;
-    // fragColor = float(${params.nearParam}) * 5.0 * vec3(1.0);
-    // fragColor = float(lightCount) / float(${params.maxLightsParam}) * vec3(1.0);
-    // fragColor = depth / float(${params.farParam}) * vec3(1.0);
     
+    fragColor = clamp(fragColor, vec3(0.0), vec3(1.0));
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;

@@ -13,6 +13,9 @@ export default function(params) {
   varying vec3 v_normal;
   varying vec2 v_uv;
 
+  // Jacky added
+  uniform vec3 u_camPos;
+
   vec3 applyNormalMap(vec3 geomnor, vec3 normap) {
     normap = normap * 2.0 - 1.0;
     vec3 up = normalize(vec3(0.001, 1, 0.001));
@@ -88,11 +91,25 @@ export default function(params) {
       float lambertTerm = max(dot(L, normal), 0.0);
 
       fragColor += albedo * lambertTerm * light.color * vec3(lightIntensity);
+
+      bool blinnPhong = true;
+      if (blinnPhong) {
+        // Blinn Phong
+        vec3 lightVec = normalize(light.position - v_position);
+        vec3 viewVec = normalize(u_camPos - v_position);
+        vec3 h = normalize(lightVec + viewVec);
+        float exp = 8.0;
+        float specularIntensity = max(pow(dot(h, normal), exp), 0.0);
+        vec3 specularColor = specularIntensity * light.color * vec3(lightIntensity);
+
+        fragColor += specularColor;
+      }
     }
 
     const vec3 ambientLight = vec3(0.025);
     fragColor += albedo * ambientLight;
 
+    fragColor = clamp(fragColor, vec3(0.0), vec3(1.0));
     gl_FragColor = vec4(fragColor, 1.0);
   }
   `;

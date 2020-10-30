@@ -21,10 +21,12 @@ export default class ForwardPlusRenderer extends BaseRenderer {
       numLights: NUM_LIGHTS, 
       maxLightsParam: MAX_LIGHTS_PER_CLUSTER,
       xSlicesParam: xSlices, ySlicesParam: ySlices, zSlicesParam: zSlices,
-      nearParam: camera.near, farParam: 50.0,
+      nearParam: camera.near, farParam: 40.0,
       widthParam: canvas.width, heightParam: canvas.height,
     }), {
-      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap', 'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix'],
+      uniforms: ['u_viewProjectionMatrix', 'u_colmap', 'u_normap',
+       'u_lightbuffer', 'u_clusterbuffer', 'u_viewMatrix',
+      'u_camPos'],
       attribs: ['a_position', 'a_normal', 'a_uv'],
     });
 
@@ -85,6 +87,8 @@ export default class ForwardPlusRenderer extends BaseRenderer {
     // TODO: Bind any other shader inputs
     // console.log(JSON.stringify(this._viewMatrix));    // Display information of the variable
     gl.uniformMatrix4fv(this._shaderProgram.u_viewMatrix, false, this._viewMatrix);
+    this._camPos = vec3.fromValues(camera.position.x, camera.position.y, camera.position.z);
+    gl.uniform3fv(this._shaderProgram.u_camPos, this._camPos);
 
     // Draw the scene. This function takes the shader program so that the model's textures can be bound to the right inputs
     scene.draw(this._shaderProgram);

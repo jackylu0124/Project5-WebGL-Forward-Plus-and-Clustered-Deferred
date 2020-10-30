@@ -49,7 +49,6 @@ var segmentColor = [1.0, 0.0, 0.0];
 wireframe.addLineSegment(segmentStart, segmentEnd, segmentColor);
 wireframe.addLineSegment([-14.0, 1.0, -6.0], [14.0, 21.0, 6.0], [0.0, 1.0, 0.0]);
 */
-// drawPlane();
 
 camera.position.set(-10, 8, 0);
 cameraControls.target.set(0, 2, 0);
@@ -93,15 +92,15 @@ function drawClusters(camera) {
 
   let nearClip = camera.near;
   let farClip = 40.0;
-  let divNumX = 3;
-  let divNumY = 4;
-  let divNumZ = 5;
+  let divNumX = 1;
+  let divNumY = 1;
+  let divNumZ = 1;
   let dz = (farClip - nearClip) / divNumZ;
   let fovRad = camera.fov / 180.0 * Math.PI;
 
   // new Sphere(new Vector3(15.0, -5.0, 0.0), 8.2) intersects with 245 clusters when divNumX = divNumY = divNumZ = 15
   // and when camera is at initial position
-  let s1 = new Sphere(new Vector3(15.0, -5.0, 0.0), 8.2);
+  let s1 = new Sphere(new Vector3(15.0, -50.0, 0.0), 8.2);
   drawSphere(s1, new Vector3(1.0, 0.0, 1.0));
 
   let counter = 0;
@@ -210,7 +209,7 @@ function drawClusters(camera) {
       }
     }
   }
-  // console.log(JSON.stringify(counter));    // Display information of the variable
+  console.log(JSON.stringify(counter));    // Display information of the variable
 }
 
 function getCenter(pt0, pt1, pt2, pt3) {

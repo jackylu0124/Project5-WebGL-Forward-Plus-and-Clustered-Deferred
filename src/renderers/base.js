@@ -26,7 +26,7 @@ export default class BaseRenderer {
     viewMat.clone().transpose().extractBasis(camR, camU, camF);
 
     let nearClip = camera.near;
-    let farClip = 50.0;
+    let farClip = 40.0;
     let divNumX = this._xSlices;
     let divNumY = this._ySlices;
     let divNumZ = this._zSlices;
@@ -118,7 +118,7 @@ export default class BaseRenderer {
             let center = new Vector3(scene.lights[i].position[0], scene.lights[i].position[1], scene.lights[i].position[2]);
             let s = new Sphere(center, r);
             
-            if (frust.containsPoint(s.center) || frust.intersectsSphere(s)) {
+            if (frust.intersectsSphere(s) || frust.containsPoint(s.center)) {  // frust.containsPoint(s.center) || 
               lightCount++;
               this._clusterTexture.buffer[this._clusterTexture.bufferIndex(index, Math.floor(lightCount / 4)) + (lightCount % 4)] = i;
             }
